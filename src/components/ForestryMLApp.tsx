@@ -1,7 +1,7 @@
 // src/components/ForestryMLApp.tsx
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Brain, TreePine, Trees, Maximize2, Layers } from 'lucide-react';
+import { Brain, TreePine, Trees, Maximize2, Layers, BookOpen, GraduationCap, Check, ScrollText, ArrowUpRight, Users, MessageSquare, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import DecisionTreeAnalysis from './algorithms/DecisionTree/DecisionTreeAnalysis';
@@ -10,6 +10,9 @@ import SVMAnalysis from './algorithms/SVM/SVMAnalysis';
 import KNNAnalysis from './algorithms/KNN/KNNAnalysis';
 import NeuralNetworkAnalysis from './algorithms/NeuralNetwork/NeuralNetworkAnalysis';
 import GradientBoostingAnalysis from './algorithms/GradientBoosting/GradientBoostingAnalysis';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import LearnMorePage from './LearnMore/LearnMorePage';
 
 export const ForestryMLApp = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -115,6 +118,16 @@ export const ForestryMLApp = () => {
             <Layers size={20} />
             <span>Gradient Boosting</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('learn-more')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
+              activeTab === 'learn-more' ? 'bg-green-700' : 'hover:bg-green-700'
+            }`}
+          >
+            <BookOpen size={20} />
+            <span>Learn More</span>
+          </button>
         </div>
       </nav>
 
@@ -185,6 +198,116 @@ export const ForestryMLApp = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="mt-6">
+                <CardContent className="pt-6">
+                  <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <BookOpen className="h-6 w-6 text-green-600" />
+                    Learn More
+                  </h3>
+                  
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Educational Resources */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl shadow-sm"
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <GraduationCap className="h-8 w-8 text-green-600" />
+                        <h4 className="text-lg font-semibold text-green-800">Educational Resources</h4>
+                      </div>
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-2">
+                          <Check className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
+                          <span>Interactive tutorials on each ML algorithm</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
+                          <span>Real-world forestry case studies</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
+                          <span>Step-by-step implementation guides</span>
+                        </li>
+                      </ul>
+                    </motion.div>
+
+                    {/* Research Papers */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm"
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <ScrollText className="h-8 w-8 text-blue-600" />
+                        <h4 className="text-lg font-semibold text-blue-800">Research Papers</h4>
+                      </div>
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-2">
+                          <ArrowUpRight className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
+                          <span>Latest ML applications in forestry</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <ArrowUpRight className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
+                          <span>Comparative algorithm studies</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <ArrowUpRight className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
+                          <span>Environmental impact assessments</span>
+                        </li>
+                      </ul>
+                    </motion.div>
+
+                    {/* Community & Support */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl shadow-sm"
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <Users className="h-8 w-8 text-purple-600" />
+                        <h4 className="text-lg font-semibold text-purple-800">Community & Support</h4>
+                      </div>
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-2">
+                          <MessageSquare className="h-5 w-5 text-purple-600 mt-1 flex-shrink-0" />
+                          <span>Expert forum discussions</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <MessageSquare className="h-5 w-5 text-purple-600 mt-1 flex-shrink-0" />
+                          <span>Monthly webinars</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <MessageSquare className="h-5 w-5 text-purple-600 mt-1 flex-shrink-0" />
+                          <span>Implementation support</span>
+                        </li>
+                      </ul>
+                    </motion.div>
+                  </div>
+
+                  {/* Additional Resources Button */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="mt-6 text-center"
+                  >
+                    <Button
+                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg transition-all duration-200"
+                      onClick={() => setActiveTab('learn-more')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <ExternalLink className="h-5 w-5" />
+                        <span>Access Full Documentation</span>
+                      </div>
+                    </Button>
+                  </motion.div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         )}
@@ -211,6 +334,10 @@ export const ForestryMLApp = () => {
 
         {activeTab === 'gradient-boosting' && (
           <GradientBoostingAnalysis data={[]} onAnalysisComplete={(results) => console.log(results)} />
+        )}
+
+        {activeTab === 'learn-more' && (
+          <LearnMorePage />
         )}
       </div>
     </div>
