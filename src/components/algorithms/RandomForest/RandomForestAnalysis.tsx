@@ -4,8 +4,14 @@ import { Trees, Activity, ArrowUpDown, HelpCircle, TreePine } from "lucide-react
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { motion } from 'framer-motion';
+import { Button } from "@/components/ui/button";
 
-const RandomForestAnalysis = () => {
+interface RandomForestAnalysisProps {
+  onLearnMore: () => void;
+}
+
+const RandomForestAnalysis: React.FC<RandomForestAnalysisProps> = ({ onLearnMore }) => {
   // State management
   const [selectedFeature, setSelectedFeature] = useState("height");
   const [numberOfTrees, setNumberOfTrees] = useState(5);
@@ -321,6 +327,23 @@ const RandomForestAnalysis = () => {
           of features per split helps balance between model complexity and generalization.
         </AlertDescription>
       </Alert>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-8 text-center"
+      >
+        <Button
+          onClick={onLearnMore}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-3 rounded-lg transition-all duration-200"
+        >
+          <div className="flex items-center gap-2">
+            <Trees className="h-5 w-5" />
+            <span>Learn more about Random Forests</span>
+          </div>
+        </Button>
+      </motion.div>
     </div>
   );
 };

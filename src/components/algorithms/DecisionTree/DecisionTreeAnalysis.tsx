@@ -1,11 +1,17 @@
 // src/components/algorithms/DecisionTree/DecisionTreeAnalysis.tsx
 import { useState, useEffect } from "react";
-import { Leaf, Activity, ArrowDownUp, HelpCircle } from "lucide-react";
+import { Leaf, Activity, ArrowDownUp, HelpCircle, TreePine } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { motion } from 'framer-motion';
+import { Button } from "@/components/ui/button";
 
-const DecisionTreeAnalysis = () => {
+interface DecisionTreeAnalysisProps {
+  onLearnMore: () => void;
+}
+
+const DecisionTreeAnalysis: React.FC<DecisionTreeAnalysisProps> = ({ onLearnMore }) => {
   // State management
   const [selectedFeature, setSelectedFeature] = useState("height");
   const [treeDepth, setTreeDepth] = useState(3);
@@ -380,6 +386,24 @@ const DecisionTreeAnalysis = () => {
           Lower mean error and higher accuracy indicate better model performance.
         </AlertDescription>
       </Alert>
+
+      {/* Add Learn More Button at the bottom */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-8 text-center"
+      >
+        <Button
+          onClick={onLearnMore}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-3 rounded-lg transition-all duration-200"
+        >
+          <div className="flex items-center gap-2">
+            <TreePine className="h-5 w-5" />
+            <span>More on Decision Trees</span>
+          </div>
+        </Button>
+      </motion.div>
     </div>
   );
 };

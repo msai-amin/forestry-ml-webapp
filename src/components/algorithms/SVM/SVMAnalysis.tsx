@@ -1,11 +1,19 @@
 // src/components/algorithms/SVM/SVMAnalysis.tsx
-import { useState } from "react";
-import { Maximize2, Activity, ArrowUpDown, HelpCircle, Divide } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Maximize2, Activity, ArrowUpDown, HelpCircle, Divide, ZoomIn, ZoomOut, Pause, Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter } from "recharts";
+import { motion } from 'framer-motion';
 
-const SVMAnalysis = () => {
+// Update the component interface
+interface SVMAnalysisProps {
+  onLearnMore: () => void;
+}
+
+// Update the component definition
+const SVMAnalysis: React.FC<SVMAnalysisProps> = ({ onLearnMore }) => {
   // State management
   const [selectedFeature, setSelectedFeature] = useState("height");
   const [kernelType, setKernelType] = useState("linear");
@@ -13,23 +21,58 @@ const SVMAnalysis = () => {
   const [gammaParameter, setGammaParameter] = useState(0.1);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
+  // Interactive visualization state
+  const [isAutoUpdate, setIsAutoUpdate] = useState(true);
+  const [highlightedSupportVectors, setHighlightedSupportVectors] = useState(true);
+  const [marginWidth, setMarginWidth] = useState(1);
+  const [zoom, setZoom] = useState(1);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   // Base data for different features
   const baseDataByFeature = {
     height: [
       { name: "Pine", x: 25.5, y: 15.2, class: 1 },
       { name: "Pine", x: 28.3, y: 16.8, class: 1 },
       { name: "Pine", x: 27.1, y: 15.9, class: 1 },
+      { name: "Pine", x: 26.8, y: 15.5, class: 1 },
+      { name: "Pine", x: 27.9, y: 16.2, class: 1 },
+      { name: "Pine", x: 26.2, y: 15.7, class: 1 },
+      { name: "Pine", x: 28.5, y: 16.5, class: 1 },
+      { name: "Pine", x: 27.3, y: 15.8, class: 1 },
+      { name: "Pine", x: 26.9, y: 16.0, class: 1 },
+      { name: "Pine", x: 28.0, y: 16.3, class: 1 },
       { name: "Oak", x: 18.4, y: 12.3, class: -1 },
       { name: "Oak", x: 20.1, y: 13.5, class: -1 },
-      { name: "Oak", x: 19.2, y: 12.8, class: -1 }
+      { name: "Oak", x: 19.2, y: 12.8, class: -1 },
+      { name: "Oak", x: 19.8, y: 13.1, class: -1 },
+      { name: "Oak", x: 18.9, y: 12.6, class: -1 },
+      { name: "Oak", x: 20.3, y: 13.3, class: -1 },
+      { name: "Oak", x: 19.5, y: 12.9, class: -1 },
+      { name: "Oak", x: 18.7, y: 12.5, class: -1 },
+      { name: "Oak", x: 20.0, y: 13.2, class: -1 },
+      { name: "Oak", x: 19.3, y: 12.7, class: -1 }
     ],
     diameter: [
       { name: "Pine", x: 45.2, y: 35.6, class: 1 },
       { name: "Pine", x: 48.7, y: 38.2, class: 1 },
       { name: "Pine", x: 46.9, y: 36.7, class: 1 },
+      { name: "Pine", x: 47.5, y: 37.1, class: 1 },
+      { name: "Pine", x: 46.3, y: 36.2, class: 1 },
+      { name: "Pine", x: 48.2, y: 37.8, class: 1 },
+      { name: "Pine", x: 47.1, y: 36.9, class: 1 },
+      { name: "Pine", x: 46.7, y: 36.5, class: 1 },
+      { name: "Pine", x: 48.5, y: 38.0, class: 1 },
+      { name: "Pine", x: 47.3, y: 37.0, class: 1 },
       { name: "Oak", x: 32.4, y: 28.5, class: -1 },
       { name: "Oak", x: 34.8, y: 30.2, class: -1 },
-      { name: "Oak", x: 33.1, y: 29.4, class: -1 }
+      { name: "Oak", x: 33.1, y: 29.4, class: -1 },
+      { name: "Oak", x: 34.2, y: 29.8, class: -1 },
+      { name: "Oak", x: 33.6, y: 29.1, class: -1 },
+      { name: "Oak", x: 35.0, y: 30.5, class: -1 },
+      { name: "Oak", x: 33.9, y: 29.6, class: -1 },
+      { name: "Oak", x: 32.8, y: 28.9, class: -1 },
+      { name: "Oak", x: 34.5, y: 30.0, class: -1 },
+      { name: "Oak", x: 33.3, y: 29.3, class: -1 }
     ],
     age: [
       { name: "Pine", x: 35, y: 42, class: 1 },
@@ -100,6 +143,106 @@ const SVMAnalysis = () => {
 
     return boundaryPoints;
   };
+
+  // Update the interactive visualization
+  const updateDecisionBoundary = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Scale factors for data mapping
+    const currentData = baseDataByFeature[selectedFeature as keyof typeof baseDataByFeature];
+    const xMin = Math.min(...currentData.map(d => d.x));
+    const xMax = Math.max(...currentData.map(d => d.x));
+    const yMin = Math.min(...currentData.map(d => d.y));
+    const yMax = Math.max(...currentData.map(d => d.y));
+    
+    const scaleX = (x: number) => (x - xMin) / (xMax - xMin) * canvas.width;
+    const scaleY = (y: number) => canvas.height - (y - yMin) / (yMax - yMin) * canvas.height;
+
+    // Draw grid
+    ctx.strokeStyle = '#eee';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= canvas.width; i += 20) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, canvas.height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(canvas.width, i);
+      ctx.stroke();
+    }
+
+    // Draw data points
+    currentData.forEach(point => {
+      ctx.beginPath();
+      ctx.arc(scaleX(point.x), scaleY(point.y), 5, 0, 2 * Math.PI);
+      ctx.fillStyle = point.class === 1 ? '#82ca9d' : '#8884d8';
+      ctx.fill();
+    });
+
+    // Draw decision boundary
+    if (kernelType === "linear") {
+      const slope = -cParameter;
+      const intercept = (yMax + yMin) / 2;
+      
+      ctx.strokeStyle = '#ff7300';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, scaleY(slope * xMin + intercept));
+      ctx.lineTo(canvas.width, scaleY(slope * xMax + intercept));
+      ctx.stroke();
+
+      // Draw margin if enabled
+      if (highlightedSupportVectors) {
+        ctx.strokeStyle = '#ff730080';
+        ctx.setLineDash([5, 5]);
+        const marginOffset = marginWidth * (yMax - yMin) * 0.1;
+        
+        ctx.beginPath();
+        ctx.moveTo(0, scaleY(slope * xMin + intercept + marginOffset));
+        ctx.lineTo(canvas.width, scaleY(slope * xMax + intercept + marginOffset));
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(0, scaleY(slope * xMin + intercept - marginOffset));
+        ctx.lineTo(canvas.width, scaleY(slope * xMax + intercept - marginOffset));
+        ctx.stroke();
+        
+        ctx.setLineDash([]);
+      }
+    } else {
+      // RBF kernel visualization
+      const steps = 50;
+      ctx.strokeStyle = '#ff7300';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      for (let i = 0; i <= steps; i++) {
+        const x = xMin + (xMax - xMin) * (i / steps);
+        const y = Math.sin(x * gammaParameter) * (yMax - yMin) / 4 + (yMax + yMin) / 2;
+        
+        if (i === 0) {
+          ctx.moveTo(scaleX(x), scaleY(y));
+        } else {
+          ctx.lineTo(scaleX(x), scaleY(y));
+        }
+      }
+      ctx.stroke();
+    }
+  }, [kernelType, cParameter, gammaParameter, selectedFeature, highlightedSupportVectors, marginWidth, baseDataByFeature]);
+
+  // Effect to update visualization when parameters change
+  useEffect(() => {
+    if (isAutoUpdate) {
+      updateDecisionBoundary();
+    }
+  }, [kernelType, cParameter, gammaParameter, selectedFeature, highlightedSupportVectors, marginWidth, isAutoUpdate, updateDecisionBoundary]);
 
   // Calculate performance metrics
   const calculatePerformance = (kernel: string, C: number, gamma: number) => {
@@ -262,7 +405,84 @@ const SVMAnalysis = () => {
         </CardContent>
       </Card>
 
-      {/* Visualization */}
+      {/* Interactive Visualization */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Interactive SVM Visualization</h3>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsAutoUpdate(!isAutoUpdate)}
+              >
+                {isAutoUpdate ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setZoom(Math.min(2, zoom + 0.1))}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 border rounded-lg p-4">
+              <canvas
+                ref={canvasRef}
+                width={400}
+                height={400}
+                className="w-full border rounded-lg"
+                style={{ transform: `scale(${zoom})` }}
+              />
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Margin Width</label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={marginWidth}
+                  onChange={(e) => setMarginWidth(Number(e.target.value))}
+                  className="w-full"
+                />
+                <div className="text-center text-sm text-gray-600">Width = {marginWidth}</div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setHighlightedSupportVectors(!highlightedSupportVectors)}
+              >
+                {highlightedSupportVectors ? 'Hide' : 'Show'} Support Vectors
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={updateDecisionBoundary}
+                disabled={isAutoUpdate}
+                title={isAutoUpdate ? "Disable auto-update to use manual updates" : "Click to update visualization"}
+              >
+                {isAutoUpdate ? "Auto-updating..." : "Update Visualization"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Data Visualization */}
       <Card>
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold mb-4">Decision Boundary Visualization</h3>
@@ -310,7 +530,7 @@ const SVMAnalysis = () => {
               </div>
               <div className="text-2xl font-bold">
                 {performance.accuracy.toFixed(1)}%
-                </div>
+              </div>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-2 mb-2">
@@ -341,8 +561,25 @@ const SVMAnalysis = () => {
           For the RBF kernel, gamma defines how much influence a single training example has.
         </AlertDescription>
       </Alert>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-8 text-center"
+      >
+        <Button
+          onClick={onLearnMore}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg transition-all duration-200"
+        >
+          <div className="flex items-center gap-2">
+            <Maximize2 className="h-5 w-5" />
+            <span>Learn more about Support Vector Machines</span>
+          </div>
+        </Button>
+      </motion.div>
     </div>
   );
 };
 
-export default SVMAnalysis;                
+export default SVMAnalysis;
